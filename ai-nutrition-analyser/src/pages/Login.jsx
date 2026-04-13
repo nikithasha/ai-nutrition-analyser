@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif', background: '#0d0d1a' }}>
@@ -83,9 +85,11 @@ function Login() {
           </p>
 
           {/* Login Button */}
-          <button style={{ width: '100%', padding: '13px', borderRadius: '10px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{ width: '100%', padding: '13px', borderRadius: '10px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
             Sign In 🚀
-          </button>
+            </button>
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '16px 0' }}>
@@ -102,9 +106,9 @@ function Login() {
           {/* Sign Up */}
           <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '13px', marginTop: '16px' }}>
             Don't have an account?{' '}
-            <span style={{ background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '600', cursor: 'pointer' }}>
-              Create one free!
-            </span>
+            <span onClick={() => navigate('/signup')} style={{ background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '600', cursor: 'pointer' }}>
+           Create one free!
+          </span>
           </p>
 
         </div>
