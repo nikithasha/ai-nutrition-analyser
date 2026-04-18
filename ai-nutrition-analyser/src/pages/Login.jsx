@@ -1,9 +1,13 @@
-import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '../lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -12,7 +16,6 @@ function Login() {
       {/* Left Panel */}
       <div style={{ width: '50%', background: '#0d0d1a', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '24px' }}>
 
-        {/* Brand */}
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: '700', background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
             🥗 AI Nutrition Analyser
@@ -52,14 +55,20 @@ function Login() {
 
       </div>
 
-      {/* Right Panel - Login Form */}
+      {/* Right Panel */}
       <div style={{ width: '50%', background: '#13131f', borderLeft: '0.5px solid #2a2a3d', padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: '380px' }}>
 
           <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'white', margin: '0 0 6px' }}>Welcome back! 👋</h2>
           <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 28px' }}>Sign in to continue your health journey</p>
 
-          {/* Email */}
+          {/* Error Message */}
+          {error && (
+            <div style={{ background: 'rgba(244,114,182,0.1)', border: '0.5px solid rgba(244,114,182,0.3)', borderRadius: '10px', padding: '12px', marginBottom: '16px', color: '#f472b6', fontSize: '13px' }}>
+              ⚠️ {error}
+            </div>
+          )}
+
           <label style={{ fontSize: '12px', color: '#9ca3af', display: 'block', marginBottom: '6px' }}>Email address</label>
           <input
             type="email"
@@ -69,7 +78,6 @@ function Login() {
             style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #2a2a3d', background: '#1a1a2e', color: 'white', fontSize: '14px', marginBottom: '16px', outline: 'none', boxSizing: 'border-box' }}
           />
 
-          {/* Password */}
           <label style={{ fontSize: '12px', color: '#9ca3af', display: 'block', marginBottom: '6px' }}>Password</label>
           <input
             type="password"
@@ -79,36 +87,43 @@ function Login() {
             style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #2a2a3d', background: '#1a1a2e', color: 'white', fontSize: '14px', marginBottom: '8px', outline: 'none', boxSizing: 'border-box' }}
           />
 
-          {/* Forgot Password */}
           <p style={{ textAlign: 'right', margin: '0 0 20px' }}>
             <span style={{ color: '#c084fc', fontSize: '12px', cursor: 'pointer' }}>Forgot password?</span>
           </p>
 
           {/* Login Button */}
           <button
-            onClick={() => navigate('/dashboard')}
-            style={{ width: '100%', padding: '13px', borderRadius: '10px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
-            Sign In 🚀
-            </button>
+            onClick={async () => {
+              if (!email || !password) { setError('Please fill in all fields!'); return; }
+              try {
+                setLoading(true);
+                setError('');
+                await signInWithEmailAndPassword(auth, email, password);
+                navigate('/dashboard');
+              } catch (err) {
+                setError('Invalid email or password!');
+                setLoading(false);
+              }
+            }}
+            style={{ width: '100%', padding: '13px', borderRadius: '10px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
+            {loading ? 'Signing In...' : 'Sign In 🚀'}
+          </button>
 
-          {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '16px 0' }}>
             <div style={{ flex: 1, height: '0.5px', background: '#2a2a3d' }}></div>
             <span style={{ color: '#4b5563', fontSize: '12px' }}>or</span>
             <div style={{ flex: 1, height: '0.5px', background: '#2a2a3d' }}></div>
           </div>
 
-          {/* Google Button */}
           <button style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#1a1a2e', color: '#d1d5db', fontSize: '13px', fontWeight: '500', border: '1px solid #2a2a3d', cursor: 'pointer' }}>
             🌐 Continue with Google
           </button>
 
-          {/* Sign Up */}
           <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '13px', marginTop: '16px' }}>
             Don't have an account?{' '}
             <span onClick={() => navigate('/signup')} style={{ background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '600', cursor: 'pointer' }}>
-           Create one free!
-          </span>
+              Create one free!
+            </span>
           </p>
 
         </div>

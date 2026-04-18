@@ -1,11 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleSignup = async () => {
+    if (!name || !email || !password) {
+      setError('Please fill in all fields!');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters!');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif', background: '#0d0d1a', alignItems: 'center', justifyContent: 'center' }}>
@@ -15,6 +39,13 @@ function Signup() {
           🥗 AI Nutrition Analyser
         </h1>
         <p style={{ color: '#6b7280', fontSize: '13px', margin: '0 0 28px' }}>Create your free account today</p>
+
+        {/* Error Message */}
+        {error && (
+          <div style={{ background: 'rgba(244,114,182,0.1)', border: '0.5px solid rgba(244,114,182,0.3)', borderRadius: '10px', padding: '12px', marginBottom: '16px', color: '#f472b6', fontSize: '13px' }}>
+            ⚠️ {error}
+          </div>
+        )}
 
         <label style={{ fontSize: '12px', color: '#9ca3af', display: 'block', marginBottom: '6px' }}>Full Name</label>
         <input
@@ -37,14 +68,17 @@ function Signup() {
         <label style={{ fontSize: '12px', color: '#9ca3af', display: 'block', marginBottom: '6px' }}>Password</label>
         <input
           type="password"
-          placeholder="Create a password"
+          placeholder="At least 6 characters"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #2a2a3d', background: '#1a1a2e', color: 'white', fontSize: '14px', marginBottom: '24px', outline: 'none', boxSizing: 'border-box' }}
         />
 
-        <button style={{ width: '100%', padding: '13px', borderRadius: '10px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
-          Create Account 🎉
+        <button
+          onClick={handleSignup}
+          disabled={loading}
+          style={{ width: '100%', padding: '13px', borderRadius: '10px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
+          {loading ? 'Creating Account...' : 'Create Account 🎉'}
         </button>
 
         <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '13px', marginTop: '16px' }}>

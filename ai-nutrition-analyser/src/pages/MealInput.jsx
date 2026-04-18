@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 function MealInput() {
   const navigate = useNavigate();
   const [mealText, setMealText] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
   const [activeTab, setActiveTab] = useState('text');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedImage(URL.createObjectURL(file));
+  const handleSaveMeal = async () => {
+    if (!mealText) {
+      setError('Please describe your meal first!');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      const user = auth.currentUser;
+      if (!user) {
+        setError('Please login first!');
+        setLoading(false);
+        return;
+      }
+      await addDoc(collection(db, 'meals'), {
+        userId: user.uid,
+        meal: mealText,
+        createdAt: serverTimestamp(),
+      });
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Something went wrong: ' + err.message);
+      setLoading(false);
     }
   };
 
@@ -22,7 +44,7 @@ function MealInput() {
         <button
           onClick={() => navigate('/dashboard')}
           style={{ background: '#13131f', border: '0.5px solid #2a2a3d', color: 'white', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '16px' }}>
-          ← 
+          ←
         </button>
         <h1 style={{ fontSize: '20px', fontWeight: '700', background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
           Log a Meal 🍽️
@@ -42,6 +64,13 @@ function MealInput() {
           📸 Photo
         </button>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{ background: 'rgba(244,114,182,0.1)', border: '0.5px solid rgba(244,114,182,0.3)', borderRadius: '10px', padding: '12px', marginBottom: '16px', color: '#f472b6', fontSize: '13px' }}>
+          ⚠️ {error}
+        </div>
+      )}
 
       {/* Text Input Tab */}
       {activeTab === 'text' && (
@@ -78,32 +107,22 @@ function MealInput() {
       {/* Photo Tab */}
       {activeTab === 'photo' && (
         <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
-          {!selectedImage ? (
-            <label style={{ display: 'block', cursor: 'pointer' }}>
-              <div style={{ border: '2px dashed #2a2a3d', borderRadius: '14px', padding: '48px 20px', textAlign: 'center' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📸</div>
-                <p style={{ color: '#9ca3af', fontSize: '14px', margin: '0 0 6px' }}>Tap to upload meal photo</p>
-                <p style={{ color: '#6b7280', fontSize: '12px', margin: 0 }}>JPG, PNG supported</p>
-              </div>
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-            </label>
-          ) : (
-            <div style={{ textAlign: 'center' }}>
-              <img src={selectedImage} alt="meal" style={{ width: '100%', borderRadius: '12px', marginBottom: '12px', maxHeight: '250px', objectFit: 'cover' }} />
-              <button
-                onClick={() => setSelectedImage(null)}
-                style={{ background: 'rgba(244,114,182,0.1)', border: '0.5px solid rgba(244,114,182,0.3)', color: '#f472b6', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px' }}>
-                Remove Photo
-              </button>
+          <label style={{ display: 'block', cursor: 'pointer' }}>
+            <div style={{ border: '2px dashed #2a2a3d', borderRadius: '14px', padding: '48px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>📸</div>
+              <p style={{ color: '#9ca3af', fontSize: '14px', margin: '0 0 6px' }}>Photo upload coming soon!</p>
+              <p style={{ color: '#6b7280', fontSize: '12px', margin: 0 }}>Use text input for now 😊</p>
             </div>
-          )}
+          </label>
         </div>
       )}
 
-      {/* Analyse Button */}
+      {/* Save Meal Button */}
       <button
-        style={{ width: '100%', padding: '16px', borderRadius: '14px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '16px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
-        🤖 Analyse Nutrition
+        onClick={handleSaveMeal}
+        disabled={loading}
+        style={{ width: '100%', padding: '16px', borderRadius: '14px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '16px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
+        {loading ? 'Saving...' : '🤖 Analyse Nutrition'}
       </button>
 
     </div>
