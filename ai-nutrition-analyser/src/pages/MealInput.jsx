@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { analyseMeal } from '../groq';
 
 function MealInput() {
   const navigate = useNavigate();
@@ -9,8 +10,9 @@ function MealInput() {
   const [activeTab, setActiveTab] = useState('text');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [nutrition, setNutrition] = useState(null);
 
-  const handleSaveMeal = async () => {
+  const handleAnalyse = async () => {
     if (!mealText) {
       setError('Please describe your meal first!');
       return;
@@ -18,18 +20,20 @@ function MealInput() {
     try {
       setLoading(true);
       setError('');
+
+      const result = await analyseMeal(mealText);
+      setNutrition(result);
+
       const user = auth.currentUser;
-      if (!user) {
-        setError('Please login first!');
-        setLoading(false);
-        return;
+      if (user) {
+        await addDoc(collection(db, 'meals'), {
+          userId: user.uid,
+          meal: mealText,
+          nutrition: result,
+          createdAt: serverTimestamp(),
+        });
       }
-      await addDoc(collection(db, 'meals'), {
-        userId: user.uid,
-        meal: mealText,
-        createdAt: serverTimestamp(),
-      });
-      navigate('/dashboard');
+      setLoading(false);
     } catch (err) {
       setError('Something went wrong: ' + err.message);
       setLoading(false);
@@ -88,7 +92,7 @@ function MealInput() {
           </div>
 
           {/* Quick Add Buttons */}
-          <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+          <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
             <p style={{ color: '#9ca3af', fontSize: '13px', margin: '0 0 12px' }}>Quick add common foods:</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {['🍳 Eggs', '🍚 Rice', '🍗 Chicken', '🥛 Milk', '🍌 Banana', '🥑 Avocado', '🍞 Bread', '🥦 Broccoli'].map((food, i) => (
@@ -106,7 +110,7 @@ function MealInput() {
 
       {/* Photo Tab */}
       {activeTab === 'photo' && (
-        <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+        <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
           <label style={{ display: 'block', cursor: 'pointer' }}>
             <div style={{ border: '2px dashed #2a2a3d', borderRadius: '14px', padding: '48px 20px', textAlign: 'center' }}>
               <div style={{ fontSize: '48px', marginBottom: '12px' }}>📸</div>
@@ -117,13 +121,41 @@ function MealInput() {
         </div>
       )}
 
-      {/* Save Meal Button */}
-      <button
-        onClick={handleSaveMeal}
-        disabled={loading}
-        style={{ width: '100%', padding: '16px', borderRadius: '14px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '16px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
-        {loading ? 'Saving...' : '🤖 Analyse Nutrition'}
-      </button>
+      {/* Nutrition Results */}
+      {nutrition && (
+        <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
+          <p style={{ color: '#9ca3af', fontSize: '13px', margin: '0 0 16px' }}>🤖 AI Nutrition Analysis:</p>
+          <p style={{ color: '#6b7280', fontSize: '13px', margin: '0 0 16px', fontStyle: 'italic' }}>{nutrition.summary}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {[
+              { label: 'Calories', val: nutrition.calories + ' kcal', color: '#c084fc', bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.3)' },
+              { label: 'Protein', val: nutrition.protein + 'g', color: '#38bdf8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.3)' },
+              { label: 'Carbs', val: nutrition.carbs + 'g', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)' },
+              { label: 'Fats', val: nutrition.fats + 'g', color: '#f472b6', bg: 'rgba(244,114,182,0.1)', border: 'rgba(244,114,182,0.3)' },
+            ].map((item, i) => (
+              <div key={i} style={{ background: item.bg, border: `0.5px solid ${item.border}`, borderRadius: '12px', padding: '14px', textAlign: 'center' }}>
+                <div style={{ color: item.color, fontSize: '18px', fontWeight: '700' }}>{item.val}</div>
+                <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px' }}>{item.label}</div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer', marginTop: '16px' }}>
+            Save & Go to Dashboard ✅
+          </button>
+        </div>
+      )}
+
+      {/* Analyse Button */}
+      {!nutrition && (
+        <button
+          onClick={handleAnalyse}
+          disabled={loading}
+          style={{ width: '100%', padding: '16px', borderRadius: '14px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '16px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
+          {loading ? '🤖 Analysing...' : '🤖 Analyse Nutrition'}
+        </button>
+      )}
 
     </div>
   );

@@ -7,7 +7,7 @@ const groq = new Groq({
 
 export const analyseMeal = async (mealText) => {
   const response = await groq.chat.completions.create({
-    model: 'llama3-8b-8192',
+    model: 'llama-3.3-70b-versatile',
     messages: [
       {
         role: 'user',
@@ -19,7 +19,8 @@ export const analyseMeal = async (mealText) => {
           "carbs": number,
           "fats": number,
           "fiber": number,
-          "summary": "one sentence about the meal"
+          "quantity": "describe the quantity and serving size of each food item",
+          "summary": "one sentence about the meal health benefits"
         }
         Only respond with the JSON, nothing else.`
       }
