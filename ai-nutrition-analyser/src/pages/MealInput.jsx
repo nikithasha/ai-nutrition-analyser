@@ -126,6 +126,12 @@ function MealInput() {
         <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
           <p style={{ color: '#9ca3af', fontSize: '13px', margin: '0 0 16px' }}>🤖 AI Nutrition Analysis:</p>
           <p style={{ color: '#6b7280', fontSize: '13px', margin: '0 0 16px', fontStyle: 'italic' }}>{nutrition.summary}</p>
+          {nutrition.usdaVerified && (
+         <div style={{ background: 'rgba(56,189,248,0.1)', border: '0.5px solid rgba(56,189,248,0.3)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+         <span style={{ fontSize: '16px' }}>✅</span>
+         <span style={{ color: '#38bdf8', fontSize: '13px' }}>Verified with USDA Database: {nutrition.usdaName}</span>
+         </div>
+         )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {[
               { label: 'Calories', val: nutrition.calories + ' kcal', color: '#c084fc', bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.3)' },

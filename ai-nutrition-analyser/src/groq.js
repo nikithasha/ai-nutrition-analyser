@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { searchUSDA } from './usda';
 
 const groq = new Groq({
   apiKey: process.env.REACT_APP_GROQ_API_KEY,
@@ -20,7 +21,8 @@ export const analyseMeal = async (mealText) => {
           "fats": number,
           "fiber": number,
           "quantity": "describe the quantity and serving size of each food item",
-          "summary": "one sentence about the meal health benefits"
+          "summary": "one sentence about the meal health benefits",
+          "mainFood": "the single most prominent food item name only"
         }
         Only respond with the JSON, nothing else.`
       }
@@ -28,5 +30,24 @@ export const analyseMeal = async (mealText) => {
   });
 
   const text = response.choices[0].message.content;
-  return JSON.parse(text);
+  const aiResult = JSON.parse(text);
+
+  try {
+    const usdaResult = await searchUSDA(aiResult.mainFood);
+    if (usdaResult) {
+      return {
+        ...aiResult,
+        usdaVerified: true,
+        usdaName: usdaResult.name,
+        usdaCalories: usdaResult.calories,
+        usdaProtein: usdaResult.protein,
+        usdaCarbs: usdaResult.carbs,
+        usdaFats: usdaResult.fats,
+      };
+    }
+  } catch (err) {
+    console.log('USDA lookup failed, using AI data only');
+  }
+
+  return aiResult;
 };
