@@ -1,7 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+
+const veggies = ['🥕', '🥦', '🍅', '🫑', '🥑', '🌽', '🍆', '🥒'];
+
+function Loader() {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => { setTimeout(() => setVisible(false), 2500); }, []);
+  if (!visible) return null;
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(135deg, #fff9f0, #fff3e0)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+        {['🥕', '🥦', '🍅'].map((v, i) => (
+          <span key={i} style={{ fontSize: '52px', display: 'inline-block', animation: `bounce 0.8s ease-in-out ${i * 0.15}s infinite` }}>{v}</span>
+        ))}
+      </div>
+      <div style={{ fontSize: '20px', fontWeight: '700', color: '#e65100' }}>Preparing your nutrition...</div>
+      <div style={{ fontSize: '14px', color: '#ff8f00', marginTop: '8px' }}>Loading AI Nutrition Analyser 🌿</div>
+      <style>{`@keyframes bounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-20px) rotate(5deg)} }`}</style>
+    </div>
+  );
+}
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -11,124 +31,96 @@ function Login() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif', background: '#0d0d1a' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #fff9f0 0%, #ffecd2 50%, #fff0e6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', padding: '20px' }}>
+      <Loader />
 
-      {/* Left Panel */}
-      <div style={{ width: '50%', background: '#0d0d1a', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '24px' }}>
+      {/* Floating veggie decorations */}
+      {veggies.map((v, i) => (
+        <div key={i} style={{ position: 'fixed', fontSize: '32px', opacity: 0.15, top: `${10 + (i * 11)}%`, left: i % 2 === 0 ? `${2 + i}%` : 'auto', right: i % 2 !== 0 ? `${2 + i}%` : 'auto', animation: `float ${3 + i * 0.3}s ease-in-out infinite`, pointerEvents: 'none' }}>
+          {v}
+        </div>
+      ))}
 
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-            🥗 AI Nutrition Analyser
-          </h1>
-          <p style={{ color: '#6b7280', fontSize: '13px', marginTop: '6px' }}>Track meals. Analyse nutrition. Live better.</p>
+      <div style={{ background: 'white', borderRadius: '24px', padding: '48px 40px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 60px rgba(230,81,0,0.15)', border: '1.5px solid #ffe0b2', position: 'relative', zIndex: 1 }}>
+
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ fontSize: '52px', marginBottom: '8px' }}>🥗</div>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#e65100', margin: '0 0 4px' }}>AI Nutrition Analyser</h1>
+          <p style={{ color: '#ff8f00', fontSize: '14px', margin: 0 }}>Track meals. Analyse nutrition. Live better. 🌿</p>
         </div>
 
-        {/* Meal Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          {[
-            { icon: '🍛', name: 'Chicken Rice', cal: '520 kcal', bg: 'rgba(192,132,252,0.12)', border: 'rgba(192,132,252,0.3)', color: '#c084fc' },
-            { icon: '🥗', name: 'Caesar Salad', cal: '310 kcal', bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.3)', color: '#f472b6' },
-            { icon: '🍳', name: 'Eggs & Toast', cal: '380 kcal', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.3)', color: '#38bdf8' },
-            { icon: '🥤', name: 'Protein Shake', cal: '210 kcal', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.3)', color: '#fbbf24' },
-          ].map((meal, i) => (
-            <div key={i} style={{ background: meal.bg, border: `0.5px solid ${meal.border}`, borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '32px' }}>{meal.icon}</div>
-              <div style={{ color: meal.color, fontSize: '12px', fontWeight: '600', marginTop: '6px' }}>{meal.name}</div>
-              <div style={{ color: '#6b7280', fontSize: '11px', marginTop: '2px' }}>{meal.cal}</div>
+        {/* Veggie row */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '28px' }}>
+          {['🥕', '🥦', '🍅', '🫑'].map((v, i) => (
+            <div key={i} style={{ background: 'linear-gradient(135deg, #fff9f0, #fff3e0)', borderRadius: '12px', padding: '8px 10px', fontSize: '22px', border: '1.5px solid #ffe0b2', textAlign: 'center', animation: `float ${2 + i * 0.2}s ease-in-out infinite` }}>
+              {v}
             </div>
           ))}
         </div>
 
-        {/* Stats Row */}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {[
-            { val: '1420', label: 'Calories', color: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
-            { val: '87g', label: 'Protein', color: '#38bdf8', bg: 'rgba(56,189,248,0.1)' },
-            { val: '44g', label: 'Fats', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)' },
-          ].map((stat, i) => (
-            <div key={i} style={{ flex: 1, background: stat.bg, border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: stat.color }}>{stat.val}</div>
-              <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-      </div>
-
-      {/* Right Panel */}
-      <div style={{ width: '50%', background: '#13131f', borderLeft: '0.5px solid #2a2a3d', padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: '380px' }}>
-
-          <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'white', margin: '0 0 6px' }}>Welcome back! 👋</h2>
-          <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 28px' }}>Sign in to continue your health journey</p>
-
-          {/* Error Message */}
-          {error && (
-            <div style={{ background: 'rgba(244,114,182,0.1)', border: '0.5px solid rgba(244,114,182,0.3)', borderRadius: '10px', padding: '12px', marginBottom: '16px', color: '#f472b6', fontSize: '13px' }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          <label style={{ fontSize: '12px', color: '#9ca3af', display: 'block', marginBottom: '6px' }}>Email address</label>
-          <input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #2a2a3d', background: '#1a1a2e', color: 'white', fontSize: '14px', marginBottom: '16px', outline: 'none', boxSizing: 'border-box' }}
-          />
-
-          <label style={{ fontSize: '12px', color: '#9ca3af', display: 'block', marginBottom: '6px' }}>Password</label>
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #2a2a3d', background: '#1a1a2e', color: 'white', fontSize: '14px', marginBottom: '8px', outline: 'none', boxSizing: 'border-box' }}
-          />
-
-          <p style={{ textAlign: 'right', margin: '0 0 20px' }}>
-            <span style={{ color: '#c084fc', fontSize: '12px', cursor: 'pointer' }}>Forgot password?</span>
-          </p>
-
-          {/* Login Button */}
-          <button
-            onClick={async () => {
-              if (!email || !password) { setError('Please fill in all fields!'); return; }
-              try {
-                setLoading(true);
-                setError('');
-                await signInWithEmailAndPassword(auth, email, password);
-                navigate('/dashboard');
-              } catch (err) {
-                setError('Invalid email or password!');
-                setLoading(false);
-              }
-            }}
-            style={{ width: '100%', padding: '13px', borderRadius: '10px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
-            {loading ? 'Signing In...' : 'Sign In 🚀'}
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '16px 0' }}>
-            <div style={{ flex: 1, height: '0.5px', background: '#2a2a3d' }}></div>
-            <span style={{ color: '#4b5563', fontSize: '12px' }}>or</span>
-            <div style={{ flex: 1, height: '0.5px', background: '#2a2a3d' }}></div>
+        {error && (
+          <div style={{ background: '#fff3e0', border: '1.5px solid #ffb74d', borderRadius: '10px', padding: '12px', marginBottom: '16px', color: '#e65100', fontSize: '13px' }}>
+            ⚠️ {error}
           </div>
+        )}
 
-          <button style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#1a1a2e', color: '#d1d5db', fontSize: '13px', fontWeight: '500', border: '1px solid #2a2a3d', cursor: 'pointer' }}>
-            🌐 Continue with Google
-          </button>
+        <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '6px', fontWeight: '600' }}>📧 Email Address</label>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ width: '100%', padding: '13px 16px', borderRadius: '12px', border: '1.5px solid #ffe0b2', background: '#fff9f0', fontSize: '14px', marginBottom: '16px', outline: 'none', boxSizing: 'border-box', color: '#333' }}
+        />
 
-          <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '13px', marginTop: '16px' }}>
-            Don't have an account?{' '}
-            <span onClick={() => navigate('/signup')} style={{ background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: '600', cursor: 'pointer' }}>
-              Create one free!
-            </span>
-          </p>
+        <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '6px', fontWeight: '600' }}>🔒 Password</label>
+        <input
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ width: '100%', padding: '13px 16px', borderRadius: '12px', border: '1.5px solid #ffe0b2', background: '#fff9f0', fontSize: '14px', marginBottom: '8px', outline: 'none', boxSizing: 'border-box', color: '#333' }}
+        />
 
+        <p style={{ textAlign: 'right', margin: '0 0 20px' }}>
+          <span style={{ color: '#ff8f00', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>Forgot password?</span>
+        </p>
+
+        <button
+          onClick={async () => {
+            if (!email || !password) { setError('Please fill in all fields!'); return; }
+            try {
+              setLoading(true); setError('');
+              await signInWithEmailAndPassword(auth, email, password);
+              navigate('/dashboard');
+            } catch (err) {
+              setError('Invalid email or password!');
+              setLoading(false);
+            }
+          }}
+          style={{ width: '100%', padding: '14px', borderRadius: '12px', background: loading ? '#ffcc80' : 'linear-gradient(90deg, #ff8f00, #e65100)', color: 'white', fontSize: '16px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', marginBottom: '16px', boxShadow: '0 4px 15px rgba(230,81,0,0.3)' }}>
+          {loading ? '🌿 Signing In...' : 'Sign In 🚀'}
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ flex: 1, height: '1px', background: '#ffe0b2' }}></div>
+          <span style={{ color: '#ccc', fontSize: '13px' }}>or</span>
+          <div style={{ flex: 1, height: '1px', background: '#ffe0b2' }}></div>
         </div>
-      </div>
 
+        <button style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'white', color: '#555', fontSize: '14px', fontWeight: '600', border: '1.5px solid #ffe0b2', cursor: 'pointer', marginBottom: '20px' }}>
+          🌐 Continue with Google
+        </button>
+
+        <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', margin: 0 }}>
+          Don't have an account?{' '}
+          <span onClick={() => navigate('/signup')} style={{ color: '#e65100', fontWeight: '700', cursor: 'pointer' }}>
+            Create one free! 🎉
+          </span>
+        </p>
+      </div>
+      <style>{`@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }`}</style>
     </div>
   );
 }

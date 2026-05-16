@@ -11,28 +11,30 @@ function MealInput() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [nutrition, setNutrition] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+// eslint-disable-next-line
+  const [imageFile, setImageFile] = useState(null);
 
   const handleAnalyse = async () => {
-    if (!mealText) {
-      setError('Please describe your meal first!');
-      return;
-    }
+    if (activeTab === 'text' && !mealText) { setError('Please describe your meal first!'); return; }
+    if (activeTab === 'photo') { setError('Photo analysis is currently disabled.'); return; }
+    
     try {
-      setLoading(true);
-      setError('');
-
+      setLoading(true); setError('');
+      
+      // We only call the text analysis now
       const result = await analyseMeal(mealText);
       setNutrition(result);
-
+      
       const user = auth.currentUser;
-      if (user) {
-        await addDoc(collection(db, 'meals'), {
-          userId: user.uid,
-          meal: mealText,
-          nutrition: result,
-          createdAt: serverTimestamp(),
-        });
-      }
+      if (!user) { setError('Please login first!'); setLoading(false); return; }
+      
+      await addDoc(collection(db, 'meals'), {
+        userId: user.uid,
+        meal: mealText,
+        nutrition: result,
+        createdAt: serverTimestamp(),
+      });
       setLoading(false);
     } catch (err) {
       setError('Something went wrong: ' + err.message);
@@ -41,128 +43,145 @@ function MealInput() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0d0d1a', fontFamily: 'sans-serif', padding: '24px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%)', fontFamily: 'sans-serif' }}>
 
-      {/* Top Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(90deg, #4caf50, #2e7d32)', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 4px 20px rgba(46,125,50,0.3)' }}>
         <button
           onClick={() => navigate('/dashboard')}
-          style={{ background: '#13131f', border: '0.5px solid #2a2a3d', color: 'white', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '16px' }}>
+          style={{ background: 'rgba(255,255,255,0.2)', border: '1.5px solid rgba(255,255,255,0.4)', color: 'white', borderRadius: '12px', padding: '8px 16px', cursor: 'pointer', fontSize: '16px', fontWeight: '700' }}>
           ←
         </button>
-        <h1 style={{ fontSize: '20px', fontWeight: '700', background: 'linear-gradient(90deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-          Log a Meal 🍽️
-        </h1>
-      </div>
-
-      {/* Tab Switcher */}
-      <div style={{ display: 'flex', background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '12px', padding: '4px', marginBottom: '24px' }}>
-        <button
-          onClick={() => setActiveTab('text')}
-          style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600', background: activeTab === 'text' ? 'linear-gradient(90deg, #c084fc, #f472b6)' : 'transparent', color: activeTab === 'text' ? 'white' : '#6b7280' }}>
-          ✏️ Type Food
-        </button>
-        <button
-          onClick={() => setActiveTab('photo')}
-          style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600', background: activeTab === 'photo' ? 'linear-gradient(90deg, #c084fc, #f472b6)' : 'transparent', color: activeTab === 'photo' ? 'white' : '#6b7280' }}>
-          📸 Photo
-        </button>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div style={{ background: 'rgba(244,114,182,0.1)', border: '0.5px solid rgba(244,114,182,0.3)', borderRadius: '10px', padding: '12px', marginBottom: '16px', color: '#f472b6', fontSize: '13px' }}>
-          ⚠️ {error}
-        </div>
-      )}
-
-      {/* Text Input Tab */}
-      {activeTab === 'text' && (
         <div>
-          <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', color: '#9ca3af', display: 'block', marginBottom: '10px' }}>
-              What did you eat? Describe your meal:
-            </label>
-            <textarea
-              placeholder="e.g. 2 boiled eggs, 1 cup of rice, 1 banana..."
-              value={mealText}
-              onChange={(e) => setMealText(e.target.value)}
-              style={{ width: '100%', minHeight: '120px', background: '#1a1a2e', border: '1px solid #2a2a3d', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '14px', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
+          <h1 style={{ color: 'white', fontSize: '20px', fontWeight: '800', margin: 0 }}>Log a Meal 🍽️</h1>
+          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', margin: '2px 0 0' }}>Tell us what you ate!</p>
+        </div>
+      </div>
 
-          {/* Quick Add Buttons */}
-          <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
-            <p style={{ color: '#9ca3af', fontSize: '13px', margin: '0 0 12px' }}>Quick add common foods:</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {['🍳 Eggs', '🍚 Rice', '🍗 Chicken', '🥛 Milk', '🍌 Banana', '🥑 Avocado', '🍞 Bread', '🥦 Broccoli'].map((food, i) => (
-                <button
-                  key={i}
-                  onClick={() => setMealText(prev => prev ? prev + ', ' + food.split(' ')[1] : food.split(' ')[1])}
-                  style={{ padding: '8px 14px', borderRadius: '20px', background: 'rgba(192,132,252,0.1)', border: '0.5px solid rgba(192,132,252,0.3)', color: '#c084fc', fontSize: '13px', cursor: 'pointer' }}>
-                  {food}
+      <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>
+
+        {/* Tab Switcher */}
+        <div style={{ display: 'flex', background: 'white', borderRadius: '16px', padding: '4px', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', border: '1.5px solid #c8e6c9' }}>
+          {[{ key: 'text', label: '✏️ Type Food' }, { key: 'photo', label: '📸 Photo' }].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => { setActiveTab(tab.key); setNutrition(null); }}
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: '700', background: activeTab === tab.key ? 'linear-gradient(90deg, #4caf50, #2e7d32)' : 'transparent', color: activeTab === tab.key ? 'white' : '#888', transition: 'all 0.3s' }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {error && (
+          <div style={{ background: '#fff9c4', border: '1.5px solid #f9a825', borderRadius: '12px', padding: '12px', marginBottom: '16px', color: '#e65100', fontSize: '13px', fontWeight: '600' }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* Text Tab */}
+        {activeTab === 'text' && !nutrition && (
+          <div>
+            <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '16px', boxShadow: '0 6px 20px rgba(46,125,50,0.1)', border: '1.5px solid #c8e6c9' }}>
+              <label style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '700', display: 'block', marginBottom: '10px' }}>
+                🥗 What did you eat?
+              </label>
+              <textarea
+                placeholder="e.g. 2 boiled eggs, 1 cup of rice, 1 banana, glass of milk..."
+                value={mealText}
+                onChange={(e) => setMealText(e.target.value)}
+                style={{ width: '100%', minHeight: '120px', background: '#f1f8e9', border: '1.5px solid #c8e6c9', borderRadius: '12px', padding: '12px', color: '#333', fontSize: '14px', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Quick Add */}
+            <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '20px', boxShadow: '0 6px 20px rgba(46,125,50,0.1)', border: '1.5px solid #c8e6c9' }}>
+              <p style={{ color: '#2e7d32', fontSize: '14px', fontWeight: '700', margin: '0 0 12px' }}>⚡ Quick Add:</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {[['🍳', 'Eggs'], ['🍚', 'Rice'], ['🍗', 'Chicken'], ['🥛', 'Milk'], ['🍌', 'Banana'], ['🥑', 'Avocado'], ['🍞', 'Bread'], ['🥦', 'Broccoli'], ['🥕', 'Carrot'], ['🍎', 'Apple']].map(([icon, food], i) => (
+                  <button
+                    key={i}
+                    onClick={() => setMealText(prev => prev ? prev + ', ' + food : food)}
+                    style={{ padding: '8px 14px', borderRadius: '20px', background: '#f1f8e9', border: '1.5px solid #a5d6a7', color: '#2e7d32', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+                    {icon} {food}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Photo Tab */}
+        {activeTab === 'photo' && !nutrition && (
+          <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '20px', boxShadow: '0 6px 20px rgba(46,125,50,0.1)', border: '1.5px solid #c8e6c9' }}>
+            {!selectedImage ? (
+              <label style={{ display: 'block', cursor: 'pointer' }}>
+                <div style={{ border: '2px dashed #a5d6a7', borderRadius: '16px', padding: '48px 20px', textAlign: 'center', background: '#f1f8e9' }}>
+                  <div style={{ fontSize: '56px', marginBottom: '12px' }}>📸</div>
+                  <p style={{ color: '#2e7d32', fontSize: '16px', fontWeight: '700', margin: '0 0 6px' }}>Tap to upload meal photo</p>
+                  <p style={{ color: '#aaa', fontSize: '13px', margin: 0 }}>JPG, PNG supported</p>
+                </div>
+                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) { setImageFile(f); setSelectedImage(URL.createObjectURL(f)); } }} style={{ display: 'none' }} />
+              </label>
+            ) : (
+              <div style={{ textAlign: 'center' }}>
+                <img src={selectedImage} alt="meal" style={{ width: '100%', borderRadius: '12px', marginBottom: '12px', maxHeight: '250px', objectFit: 'cover' }} />
+                <button onClick={() => { setSelectedImage(null); setImageFile(null); }} style={{ background: '#ffebee', border: '1.5px solid #ef9a9a', color: '#c62828', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                  🗑️ Remove Photo
                 </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nutrition Results */}
+        {nutrition && (
+          <div style={{ background: 'white', borderRadius: '20px', padding: '24px', marginBottom: '20px', boxShadow: '0 8px 30px rgba(46,125,50,0.15)', border: '1.5px solid #c8e6c9' }}>
+            <h3 style={{ color: '#2e7d32', fontSize: '16px', fontWeight: '800', margin: '0 0 8px' }}>🤖 AI Nutrition Analysis</h3>
+            <p style={{ color: '#888', fontSize: '13px', margin: '0 0 16px', fontStyle: 'italic' }}>{nutrition.summary}</p>
+
+            {nutrition.usdaVerified && (
+              <div style={{ background: '#e8f5e9', border: '1.5px solid #a5d6a7', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>✅</span>
+                <span style={{ color: '#2e7d32', fontSize: '13px', fontWeight: '600' }}>Verified with USDA Database: {nutrition.usdaName}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              {[
+                { label: '🔥 Calories', val: nutrition.calories + ' kcal', bg: '#fff3e0', border: '#ffcc80', color: '#e65100' },
+                { label: '💪 Protein', val: nutrition.protein + 'g', bg: '#e8f5e9', border: '#a5d6a7', color: '#2e7d32' },
+                { label: '⚡ Carbs', val: nutrition.carbs + 'g', bg: '#fff8e1', border: '#ffe082', color: '#f57f17' },
+                { label: '🫙 Fats', val: nutrition.fats + 'g', bg: '#fce4ec', border: '#f48fb1', color: '#880e4f' },
+              ].map((item, i) => (
+                <div key={i} style={{ background: item.bg, border: `1.5px solid ${item.border}`, borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
+                  <div style={{ color: item.color, fontSize: '22px', fontWeight: '800' }}>{item.val}</div>
+                  <div style={{ color: '#888', fontSize: '12px', marginTop: '4px', fontWeight: '600' }}>{item.label}</div>
+                </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Photo Tab */}
-      {activeTab === 'photo' && (
-        <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
-          <label style={{ display: 'block', cursor: 'pointer' }}>
-            <div style={{ border: '2px dashed #2a2a3d', borderRadius: '14px', padding: '48px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>📸</div>
-              <p style={{ color: '#9ca3af', fontSize: '14px', margin: '0 0 6px' }}>Photo upload coming soon!</p>
-              <p style={{ color: '#6b7280', fontSize: '12px', margin: 0 }}>Use text input for now 😊</p>
+            <div style={{ background: '#f1f8e9', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px' }}>
+              <span style={{ color: '#2e7d32', fontSize: '13px', fontWeight: '600' }}>📏 Quantity: </span>
+              <span style={{ color: '#555', fontSize: '13px' }}>{nutrition.quantity}</span>
             </div>
-          </label>
-        </div>
-      )}
 
-      {/* Nutrition Results */}
-      {nutrition && (
-        <div style={{ background: '#13131f', border: '0.5px solid #2a2a3d', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
-          <p style={{ color: '#9ca3af', fontSize: '13px', margin: '0 0 16px' }}>🤖 AI Nutrition Analysis:</p>
-          <p style={{ color: '#6b7280', fontSize: '13px', margin: '0 0 16px', fontStyle: 'italic' }}>{nutrition.summary}</p>
-          {nutrition.usdaVerified && (
-         <div style={{ background: 'rgba(56,189,248,0.1)', border: '0.5px solid rgba(56,189,248,0.3)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-         <span style={{ fontSize: '16px' }}>✅</span>
-         <span style={{ color: '#38bdf8', fontSize: '13px' }}>Verified with USDA Database: {nutrition.usdaName}</span>
-         </div>
-         )}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {[
-              { label: 'Calories', val: nutrition.calories + ' kcal', color: '#c084fc', bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.3)' },
-              { label: 'Protein', val: nutrition.protein + 'g', color: '#38bdf8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.3)' },
-              { label: 'Carbs', val: nutrition.carbs + 'g', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)' },
-              { label: 'Fats', val: nutrition.fats + 'g', color: '#f472b6', bg: 'rgba(244,114,182,0.1)', border: 'rgba(244,114,182,0.3)' },
-            ].map((item, i) => (
-              <div key={i} style={{ background: item.bg, border: `0.5px solid ${item.border}`, borderRadius: '12px', padding: '14px', textAlign: 'center' }}>
-                <div style={{ color: item.color, fontSize: '18px', fontWeight: '700' }}>{item.val}</div>
-                <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px' }}>{item.label}</div>
-              </div>
-            ))}
+            <button
+              onClick={() => navigate('/dashboard')}
+              style={{ width: '100%', padding: '14px', borderRadius: '14px', background: 'linear-gradient(90deg, #4caf50, #2e7d32)', color: 'white', fontSize: '15px', fontWeight: '800', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(46,125,50,0.3)' }}>
+              ✅ Saved! Go to Dashboard
+            </button>
           </div>
+        )}
+
+        {!nutrition && (
           <button
-            onClick={() => navigate('/dashboard')}
-            style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '15px', fontWeight: '700', border: 'none', cursor: 'pointer', marginTop: '16px' }}>
-            Save & Go to Dashboard ✅
+            onClick={handleAnalyse}
+            disabled={loading}
+            style={{ width: '100%', padding: '16px', borderRadius: '16px', background: loading ? '#a5d6a7' : 'linear-gradient(90deg, #4caf50, #2e7d32)', color: 'white', fontSize: '16px', fontWeight: '800', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 6px 20px rgba(46,125,50,0.35)' }}>
+            {loading ? '🤖 Analysing your meal...' : '🤖 Analyse Nutrition'}
           </button>
-        </div>
-      )}
-
-      {/* Analyse Button */}
-      {!nutrition && (
-        <button
-          onClick={handleAnalyse}
-          disabled={loading}
-          style={{ width: '100%', padding: '16px', borderRadius: '14px', background: loading ? '#2a2a3d' : 'linear-gradient(90deg, #c084fc, #f472b6)', color: 'white', fontSize: '16px', fontWeight: '700', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? '🤖 Analysing...' : '🤖 Analyse Nutrition'}
-        </button>
-      )}
-
+        )}
+      </div>
     </div>
   );
 }
